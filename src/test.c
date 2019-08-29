@@ -485,19 +485,12 @@ int main(int argc, char **argv) {
 
   levelmax = floor_log_2((unsigned int) initial);
 
-  //-------------------- Memory Management ------------------- //
   //Create allocators
   allocators = (numa_allocator_t**)malloc(numberNumaZones * sizeof(numa_allocator_t*));
   unsigned num_expected_nodes = (unsigned)(16 * initial * (1.0 + (update / 100.0)));
   unsigned buffer_size = CACHE_LINE_SIZE * num_expected_nodes;
-  printf("Developed Allocators\n");
+  printf("Constructed Allocators\n");
 
-  //Initialize Hazard Container
-  HazardNode_t* hazardNode = constructHazardNode(0);
-  memoryLedger = constructHazardContainer(hazardNode);
-  printf("Created Hazard Manager\n");
-
-  //------------------- Platform Structures ----------------- //
   //create sentinel node on NUMA zone 0
   node_t* tail = constructNode(INT_MAX, numberNumaZones);
   node_t* head = constructLinkedNode(INT_MIN, numberNumaZones, tail);
@@ -520,6 +513,11 @@ int main(int argc, char **argv) {
   }
   free(thds);
   printf("Initialized Search Layers\n");
+
+  //Initialize Hazard Container
+  HazardNode_t* hazardNode = constructHazardNode(0);
+  memoryLedger = constructHazardContainer(hazardNode);
+  printf("Created Hazard Manager\n");
 
   stop_condition = 0;
   global_seed = rand();

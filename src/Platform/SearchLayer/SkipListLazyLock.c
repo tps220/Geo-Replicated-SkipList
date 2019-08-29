@@ -61,8 +61,8 @@ int removeNode(inode_t *sentinel, int val, int zone, memory_queue_t* garbage) {
     for (int i = 0; i < candidate -> topLevel; i++) {
       predecessors[i] -> next[i] = successors[i] -> next[i];
     }
-    mq_push(garbage, candidate);
     __sync_fetch_and_sub(&candidate -> dataLayer -> references, 1);
+    mq_push(garbage, candidate);
     return 1;
   }
   return 0;
