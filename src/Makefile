@@ -3,7 +3,7 @@ ROOT = ../
 include $(ROOT)/common/Makefile.common
 
 BINS = $(BINDIR)/lazy-numa
-EXTRA_PATHS = -I./Architecture -I./Platform/MemoryReclamation -I$(ROOT)/common/atomic_ops
+EXTRA_PATHS = -I./Architecture/Allocator -I./Architecture/Nodes -I./Architecture/Queues -I./Platform/MemoryReclamation -I./Platform/SearchLayer -I$(ROOT)/common/atomic_ops
 EXTRA_FLAGS = -lpthread -g
 .PHONY:	all clean
 
