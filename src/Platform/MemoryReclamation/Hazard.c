@@ -2,7 +2,6 @@
 #define HAZARD_C
 #include "Hazard.h"
 #include "Nodes.h"
-#include "Atomic.h"
 
 HazardNode_t* constructHazardNode(int zone) {
     HazardNode_t* node = (HazardNode_t*)nalloc(allocators[zone], sizeof(HazardNode_t));
@@ -63,7 +62,6 @@ void scan(LinkedList_t* retiredList, void (*reclaimMemory)(void*, int), int zone
 
 void reclaimIndexNode(void* ptr, int zone) {
   inode_t* node = (inode_t*)ptr;
-  FAD(&node -> dataLayer -> references);
   destructIndexNode(node, zone);
   node = NULL;
 }

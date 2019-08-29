@@ -2,7 +2,6 @@
 #define SKIPLISTLAZYLOCK_C
 
 #include "SkipListLazyLock.h"
-#include "Atomic.h"
 
 //Inserts a value into the skip list if it doesn't already exist
 int add(inode_t *sentinel, int val, node_t* dataLayer, int zone) {
@@ -33,6 +32,7 @@ int add(inode_t *sentinel, int val, node_t* dataLayer, int zone) {
     }
     return 1;
   }
+  __sync_fetch_and_sub(&candidate -> dataLayer -> references, 1);
   return 0;
 }
 
@@ -59,9 +59,10 @@ int removeNode(inode_t *sentinel, int val, int zone, memory_queue_t* garbage) {
   inode_t* candidate = current;
   if (candidate -> val == val) {
     for (int i = 0; i < candidate -> topLevel; i++) {
-        predecessors[i] -> next[i] = successors[i] -> next[i];
+      predecessors[i] -> next[i] = successors[i] -> next[i];
     }
     mq_push(garbage, candidate);
+    __sync_fetch_and_sub(&candidate -> dataLayer -> references, 1);
     return 1;
   }
   return 0;

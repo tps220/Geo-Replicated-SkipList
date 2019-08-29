@@ -2,7 +2,6 @@
 #define DATA_LAYER_C
 
 #include "DataLayer.h"
-#include "Atomic.h"
 #include <pthread.h>
 #include <assert.h>
 #include <unistd.h>
@@ -47,7 +46,10 @@ inline int validateLink(node_t* previous, node_t* current) {
 }
 
 inline int validateRemoval(node_t* previous, node_t* current) {
-  return previous -> next == current && current -> markedToDelete && current -> fresh == 0;
+  return previous -> next == current &&
+         current -> markedToDelete &&
+         current -> fresh == 0 &&
+         current -> references == 0;
 }
 
 int lazyFind(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
@@ -81,7 +83,7 @@ int lazyAdd(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
     if (validateLink(previous, current) && previous -> markedToDelete != 2) {
       if (current -> val == val && current -> markedToDelete) {
         current -> markedToDelete = 0;
-        current -> fresh = 1;
+        current -> fresh = 2;
         pthread_mutex_unlock(&previous -> lock);
         pthread_mutex_unlock(&current -> lock);
         return 1;
@@ -150,10 +152,11 @@ void* backgroundRemoval(void* input) {
           dispatchSignal(current -> val, current, REMOVAL);
         }
         else {
+          current -> references += numberNumaZones;
           dispatchSignal(current -> val, current, INSERTION);
         }
       }
-      else if (current -> markedToDelete && (current -> references == 0 || (current -> references < 0 && current -> references % numberNumaZones == 0))) {
+      else if (validateRemoval(previous, current)) {
         int valid = 0;
         pthread_mutex_lock(&previous -> lock);
         pthread_mutex_lock(&current -> lock);

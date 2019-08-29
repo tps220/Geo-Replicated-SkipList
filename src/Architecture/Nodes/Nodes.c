@@ -39,7 +39,7 @@ node_t* constructNode(int val, int initialReferences) {
   node -> val = val;
   node -> next = NULL;
   node -> markedToDelete = 0;
-  node -> references = initialReferences; //QUESTION: is this okay? instantiating number of references before actual additions
+  node -> references = 0;
   node -> fresh = 1; //automatically marked as fresh on construction
   pthread_mutex_init(&node -> lock, NULL);
   return node;
