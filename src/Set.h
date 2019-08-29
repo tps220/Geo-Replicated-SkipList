@@ -16,6 +16,7 @@ int sl_contains(searchLayer_t* numask, int val, HazardNode_t* hazardNode);
 int sl_add(searchLayer_t* numask, int val, HazardNode_t* hazardNode);
 int sl_remove(searchLayer_t* numask, int val, HazardNode_t* hazardNode);
 int sl_size(node_t* sentinel);
+int sl_overhead(node_t* sentinel);
 void sl_destruct(node_t* sentinel);
 
 #endif

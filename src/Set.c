@@ -27,6 +27,16 @@ int sl_size(node_t* sentinel) {
   return size;
 }
 
+int sl_overhead(node_t* sentinel) {
+  int size = -1;
+  node_t* runner = sentinel -> next;
+  while (runner != NULL) {
+    size++;
+    runner = runner -> next;
+  }
+  return size;
+}
+
 void sl_destruct(node_t* sentinel) {
 	node_t* runner = sentinel;
 	while (runner != NULL) {
@@ -37,3 +47,15 @@ void sl_destruct(node_t* sentinel) {
 }
 
 #endif
+
+//Get data for small --> big (same scheduling mechanism in Herihly)
+
+//Implement hazard pointers for Herihly
+
+//Measure number of nodes we traverse in the data layer in general
+
+//How many times NUMASK fails in unlinking a node in the helepr thread and goes forward
+
+//Create an easy mechanism to remove reclamation or enable reclamation
+
+//This will enable us to prove
