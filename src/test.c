@@ -726,7 +726,7 @@ int main(int argc, char **argv) {
 	free(data);
 
   printf("Set size      : %d (expected: %d)\n", sl_size(head), size);
-  printf("Total size    : %d (expected: %d)\n", sl_overhead(hide), size);
+  printf("Total size    : %d (expected: %d)\n", sl_overhead(head), size);
 //  printf("Size (w/ del) : %d\n", data_layer_size(sentinel_node, 0));
 
   printf("Duration      : %d (ms)\n", duration);

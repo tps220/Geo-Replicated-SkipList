@@ -19,7 +19,7 @@ inline void collect(memory_queue_t* garbage, LinkedList_t* retiredList);
 
 inline dataLayerThread_t* constructDataLayerThread();
 
-inline node_t* getElement(inode_t* sentinel, const int val, HazardNode_t* hazardNode) {
+inline pair_t getElement(inode_t* sentinel, const int val, HazardNode_t* hazardNode) {
   inode_t *previous = sentinel, *current = NULL;
   for (int i = previous -> topLevel - 1; i >= 0; i--) {
     hazardNode -> hp1 = previous -> next[i];
@@ -31,7 +31,33 @@ inline node_t* getElement(inode_t* sentinel, const int val, HazardNode_t* hazard
       current = (inode_t*)hazardNode -> hp1;
     }
   }
-  return previous -> dataLayer;
+
+  hazardNode -> hp0 = previous -> dataLayer;
+  node_t* prv =  (node_t*)hazardNode -> hp0;
+  hazardNode -> hp1 = prv -> next;
+  node_t* curr = (node_t*)hazardNode -> hp1;
+  while (curr -> val < val) {
+    if (validateRemoval(prv, curr) && curr -> next -> val < val) {
+      pthread_mutex_lock(&prv -> lock);
+      pthread_mutex_lock(&curr -> lock);
+      if (validateRemoval(prv, curr) && curr -> next -> val < val) {
+        curr -> fresh = 0;
+        prv -> next = curr -> next;
+        multi_push(mq[numberNumaZones + hazardNode -> id], curr);
+      }
+      pthread_mutex_unlock(&prv -> lock);
+      pthread_mutex_unlock(&curr -> lock);
+    }
+    hazardNode -> hp0 = curr;
+    prv = (node_t*)hazardNode -> hp0;
+    hazardNode -> hp1 = curr -> next;
+    curr = (node_t*)hazardNode -> hp1;
+  }
+
+  pair_t pair;
+  pair.previous = prv;
+  pair.current = curr;
+  return pair;
 }
 
 inline void dispatchSignal(int val, node_t* dataLayer, Job operation) {

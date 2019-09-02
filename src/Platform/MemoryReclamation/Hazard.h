@@ -10,6 +10,7 @@ extern numa_allocator_t** allocators;
 typedef struct HazardNode {
     void* hp0;
     void* hp1;
+    LinkedList_t* retiredList;
     struct HazardNode* next;
 } HazardNode_t;
 
@@ -25,12 +26,12 @@ void destructHazardContainer(HazardContainer_t* container);
 
 extern HazardContainer_t* memoryLedger;
 
-void retireElement(LinkedList_t* hazardNode, void* ptr, void (*reclaimMemory)(void*, int), int zone);
-void scan(LinkedList_t* hazardNode, void (*reclaimMemory)(void*, int), int zone);
+void retireElement(LinkedList_t* retiredList, void* ptr, void (*reclaimMemory)(void*, int), int zone);
+void scan(LinkedList_t* retiredList, void (*reclaimMemory)(void*, int), int zone);
 void reclaimIndexNode(void* ptr, int zone);
 void reclaimDataLayerNode(void* ptr, int zone);
 
-#define RETIRE_INDEX_NODE(retiredList, ptr, zone) retireElement((retiredList), (ptr), reclaimIndexNode, (zone))
-#define RETIRE_NODE(retiredList, ptr) retireElement((retiredList), (ptr), reclaimDataLayerNode, 0)
+#define RETIRE_INDEX_NODE(hazardNode, ptr, zone) retireElement((hazardNode -> retiredList), (ptr), reclaimIndexNode, (zone))
+#define RETIRE_NODE(hazardNode, ptr) retireElement((hazardNode -> retiredList), (ptr), reclaimDataLayerNode, 0)
 
 #endif

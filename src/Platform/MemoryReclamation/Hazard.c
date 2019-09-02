@@ -7,10 +7,12 @@ HazardNode_t* constructHazardNode(int zone) {
     HazardNode_t* node = (HazardNode_t*)nalloc(allocators[zone], sizeof(HazardNode_t));
     node -> hp0 = node -> hp1 = NULL;
     node -> next = NULL;
+    node -> retiredList = constructLinkedList();
     return node;
 }
 
-void destructHazardNode(HazardNode_t* node, int zone) {
+void destructHazardNode(HazardNode_t* node, int zone, int isDataLayer) {
+  destructLinkedList(node -> retiredList, isDataLayer);
   nfree(allocators[zone], node, sizeof(HazardNode_t));
 }
 

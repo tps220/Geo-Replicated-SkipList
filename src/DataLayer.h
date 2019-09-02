@@ -23,6 +23,10 @@ typedef struct gc_container {
   LinkedList_t* retiredList;
 } gc_container_t;
 
+typedef struct node_pair {
+  node_t* previous;
+  node_t* current;
+} pair_t;
 
 //Driver Functions
 int lazyFind(searchLayer_t* numask, int val, HazardNode_t* hazardNode);
