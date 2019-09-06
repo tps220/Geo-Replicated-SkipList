@@ -5,7 +5,7 @@
 #include "LinkedList.h"
 
 extern numa_allocator_t** allocators;
-#define MAX_DEPTH 5
+#define MAX_DEPTH 10
 
 typedef struct HazardNode {
     void* hp0;
@@ -31,7 +31,7 @@ void scan(LinkedList_t* retiredList, void (*reclaimMemory)(void*, int), int zone
 void reclaimIndexNode(void* ptr, int zone);
 void reclaimDataLayerNode(void* ptr, int zone);
 
-#define RETIRE_INDEX_NODE(hazardNode, ptr, zone) retireElement((hazardNode -> retiredList), (ptr), reclaimIndexNode, (zone))
+#define RETIRE_INDEX_NODE(retiredList, ptr, zone) retireElement((retiredList), (ptr), reclaimIndexNode, (zone))
 #define RETIRE_NODE(hazardNode, ptr) retireElement((hazardNode -> retiredList), (ptr), reclaimDataLayerNode, 0)
 
 #endif

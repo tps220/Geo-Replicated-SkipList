@@ -42,8 +42,8 @@
 #define DEFAULT_ALTERNATE               0
 #define DEFAULT_EFFECTIVE               1
 #define DEFAULT_UNBALANCED              0
-#define MAX_NUMA_ZONES           numa_max_node() + 1
-#define MIN_NUMA_ZONES          1
+#define MAX_NUMA_ZONES                  numa_max_node() + 1
+#define MIN_NUMA_ZONES                  1
 
 #define XSTR(s)                         STR(s)
 #define STR(s)                          #s
@@ -765,13 +765,15 @@ int main(int argc, char **argv) {
   stopDataLayerHelpers();
   for(int i = 0; i < numberNumaZones; i++) {
     destructSearchLayer(numaLayers[i]);
-    destructAllocator(allocators[i]);
   }
   free(numaLayers);
 	free(allocators);
   sl_destruct(head);
   destructHazardContainer(memoryLedger);
 
+  for (int i = 0; i < numberNumaZones; i++) {
+    destructAllocator(allocators[i]);
+  }
   // Cleanup STM
   //TM_SHUTDOWN();
 

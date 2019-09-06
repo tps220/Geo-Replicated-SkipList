@@ -23,17 +23,16 @@ searchLayer_t* constructSearchLayer(inode_t* sentinel, int zone) {
   numask -> sentinel = sentinel;
   numask -> numaZone = zone;
   numask -> updates = constructJobQueue();
-  numask -> garbage = constructMemoryQueue();
   numask -> running = 0;
   numask -> stopGarbageCollection = 0;
   numask -> sleep_time = 0;
+  numask -> retiredList = constructLinkedList();
   return numask;
 }
 
 searchLayer_t* destructSearchLayer(searchLayer_t* numask) {
   stopIndexLayer(numask);
   destructJobQueue(numask -> updates);
-  destructMemoryQueue(numask -> garbage);
   inode_t* runner = numask -> sentinel;
   while (runner != NULL) {
     inode_t* temp = runner;
@@ -57,10 +56,6 @@ void startIndexLayer(searchLayer_t* numask, int sleep_time) {
   numask -> sleep_time = sleep_time;
   if (numask -> running == 0) {
     numask -> finished = 0;
-
-    numask -> stopGarbageCollection = 0;
-    pthread_create(&numask -> reclaimer, NULL, garbageCollectionIndexLayer, (void*)numask);
-
     pthread_create(&numask -> helper, NULL, updateNumaZone, (void*)numask);
     numask -> running = 1;
   }
@@ -70,10 +65,6 @@ void stopIndexLayer(searchLayer_t* numask) {
   if (numask -> running) {
     numask -> finished = 1;
     pthread_join(numask -> helper, NULL);
-
-    numask -> stopGarbageCollection = 1;
-    pthread_join(numask -> reclaimer, NULL);
-
     numask -> running = 0;
   }
 }
@@ -81,7 +72,7 @@ void stopIndexLayer(searchLayer_t* numask) {
 void* updateNumaZone(void* args) {
   searchLayer_t* numask = (searchLayer_t*)args;
   job_queue_t* updates = numask -> updates;
-  memory_queue_t* gc = numask -> garbage;
+  LinkedList_t* retiredList = numask -> retiredList;
   inode_t* sentinel = numask -> sentinel;
   const int numaZone = numask -> numaZone;
 
@@ -93,13 +84,13 @@ void* updateNumaZone(void* args) {
 
   while (numask -> finished == 0) {
     usleep(numask -> sleep_time);
-    while (numask -> finished == 0 && runJob(sentinel, pop(updates), numaZone, gc)) {}
+    while (numask -> finished == 0 && runJob(sentinel, pop(updates), numaZone, retiredList)) {}
   }
 
   return NULL;
 }
 
-int runJob(inode_t* sentinel, q_node_t* job, int zone, memory_queue_t* gc) {
+int runJob(inode_t* sentinel, q_node_t* job, int zone, LinkedList_t* retiredList) {
   if (job == NULL) {
     return 0;
   }
@@ -107,40 +98,10 @@ int runJob(inode_t* sentinel, q_node_t* job, int zone, memory_queue_t* gc) {
     add(sentinel, job -> val, job -> node, zone);
   }
   else if (job -> operation == REMOVAL) {
-    removeNode(sentinel, job -> val, zone, gc);
+    removeNode(sentinel, job -> val, zone, retiredList);
   }
   free(job);
   return 1;
-}
-
-void* garbageCollectionIndexLayer(void* args) {
-  searchLayer_t* numask = (searchLayer_t*)args;
-  memory_queue_t* garbage = numask -> garbage;
-  const int numaZone = numask -> numaZone;
-
-  //Pin to Zone & CPU
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  CPU_SET(numaZone, &cpuset);
-  pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-
-  //Instantiate thread local retired list
-  LinkedList_t* retiredList = constructLinkedList();
-
-  while (numask -> stopGarbageCollection == 0) {
-    usleep(numask -> sleep_time);
-    collect(garbage, retiredList, numaZone);
-  }
-  collect(garbage, retiredList, numaZone);
-  destructLinkedList(retiredList, 0);
-}
-
-inline void collect(memory_queue_t* garbage, LinkedList_t* retiredList, int zone) {
-  m_node_t* subscriber;
-  while ((subscriber = mq_pop(garbage)) != NULL) {
-    RETIRE_INDEX_NODE(retiredList, subscriber -> node, zone);
-    free(subscriber);
-  }
 }
 
 #endif

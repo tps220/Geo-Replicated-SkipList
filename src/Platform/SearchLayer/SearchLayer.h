@@ -10,8 +10,6 @@ typedef struct searchLayer {
   inode_t* sentinel;
   pthread_t helper;
   job_queue_t* updates;
-  pthread_t reclaimer;
-  memory_queue_t* garbage;
   int numaZone;
   volatile char finished;
   volatile char stopGarbageCollection;
@@ -27,7 +25,7 @@ void startIndexLayer(searchLayer_t* numask, int sleep_time);
 void stopIndexLayer(searchLayer_t* numask);
 
 //helper functions
-int runJob(inode_t* sentinel, q_node_t* job, int zone, memory_queue_t* gc);
+int runJob(inode_t* sentinel, q_node_t* job, int zone, LinkedList_t* retiredList);
 void* updateNumaZone(void* args);
 void* garbageCollectionIndexLayer(void* args);
 

@@ -14,16 +14,10 @@ typedef struct dataLayerThread_t {
   volatile char finished;
   int sleep_time;
   node_t* sentinel;
+  HazardNode_t* hazardNode;
 } dataLayerThread_t;
 
-typedef struct gc_container {
-  pthread_t reclaimer;
-  volatile char stopGarbageCollection;
-  memory_queue_t* garbage;
-  LinkedList_t* retiredList;
-} gc_container_t;
-
-typedef struct node_pair {
+typedef struct pair {
   node_t* previous;
   node_t* current;
 } pair_t;
