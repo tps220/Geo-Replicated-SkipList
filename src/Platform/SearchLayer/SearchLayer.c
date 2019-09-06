@@ -22,7 +22,6 @@ searchLayer_t* constructSearchLayer(inode_t* sentinel, int zone) {
   numask -> numaZone = zone;
   numask -> updates = constructJobQueue();
   numask -> running = 0;
-  numask -> stopGarbageCollection = 0;
   numask -> sleep_time = 0;
   numask -> retiredList = constructLinkedList();
   return numask;

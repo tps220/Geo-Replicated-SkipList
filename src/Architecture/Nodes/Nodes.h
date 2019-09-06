@@ -11,7 +11,7 @@
 extern numa_allocator_t** allocators;
 extern unsigned int levelmax;
 
-enum DeletionState {
+typedef volatile enum DeletionState {
   EMPTY,
   LOGICAL,
   PHYSICAL
@@ -20,7 +20,7 @@ enum DeletionState {
 //data layer node
 typedef struct node {
   int val; //stores the value at the node
-  volatile DeletionState_t markedToDelete; //stores whether marked for deletion
+  DeletionState_t markedToDelete; //stores whether marked for deletion
   volatile int references; //stores the number of pointers pointing to the data layer node form the numa zones
   volatile int fresh; //identifies whether the node was recently removed/inserted, and needs to be propogated to index layers
   struct node* next; //stores the next data layer node

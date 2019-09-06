@@ -12,7 +12,6 @@ typedef struct searchLayer {
   job_queue_t* updates;
   int numaZone;
   volatile char finished;
-  volatile char stopGarbageCollection;
   volatile char running;
   int sleep_time;
   LinkedList_t* retiredList;
