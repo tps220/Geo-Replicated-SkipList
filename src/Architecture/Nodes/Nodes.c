@@ -38,7 +38,7 @@ node_t* constructNode(int val, int initialReferences) {
   node_t* node = (node_t*)malloc(sizeof(node_t));
   node -> val = val;
   node -> next = NULL;
-  node -> markedToDelete = 0;
+  node -> markedToDelete = EMPTY;
   node -> references = 0;
   node -> fresh = 1; //automatically marked as fresh on construction
   pthread_mutex_init(&node -> lock, NULL);

@@ -70,19 +70,21 @@ inline void dispatchSignal(int val, node_t* dataLayer, Job operation) {
 }
 
 inline int validateLink(node_t* previous, node_t* current) {
-  return previous -> next == current;
+  return previous -> next == current &&
+         previous -> markedToDelete != PHYSICAL &&
+         current -> markedToDelete != PHYSICAL;
 }
 
 inline int validateRemoval(node_t* previous, node_t* current) {
-  return previous -> next == current &&
-         current -> markedToDelete &&
+  return current -> markedToDelete == LOGICAL &&
+         validateLink(previous, current) &&
          current -> references == 0;
 }
 
 int lazyFind(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
   pair_t pair = getElement(numask -> sentinel, val, hazardNode);
   node_t* current = pair.current;
-  int found = current -> val == val && current -> markedToDelete == 0;
+  int found = current -> val == val && current -> markedToDelete == EMPTY;
   hazardNode -> hp0 = NULL;
   hazardNode -> hp1 = NULL;
   return found;
@@ -98,9 +100,9 @@ int lazyAdd(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
     pthread_mutex_lock(&current -> lock);
     hazardNode -> hp0 = NULL;
     hazardNode -> hp1 = NULL;
-    if (validateLink(previous, current) && previous -> markedToDelete != 2) {
+    if (validateLink(previous, current)) {
       if (current -> val == val && current -> markedToDelete) {
-        current -> markedToDelete = 0;
+        current -> markedToDelete = EMPTY;
         current -> fresh = 2;
         pthread_mutex_unlock(&previous -> lock);
         pthread_mutex_unlock(&current -> lock);
@@ -142,7 +144,7 @@ int lazyRemove(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
         pthread_mutex_unlock(&current -> lock);
         return 0;
       }
-      current -> markedToDelete = 1;
+      current -> markedToDelete = LOGICAL;
       if (validateRemoval(previous, current)) {
         removeElement(previous, current, hazardNode);
       }
@@ -168,7 +170,7 @@ void* backgroundRemoval(void* input) {
     while (current -> next != NULL) {
       if (current -> fresh) {
         current -> fresh = 0;
-        if (current -> markedToDelete) {
+        if (current -> markedToDelete == LOGICAL) {
           dispatchSignal(current -> val, current, REMOVAL);
         }
         else {
