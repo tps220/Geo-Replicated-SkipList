@@ -3,7 +3,6 @@
 
 #include "SearchLayer.h"
 #include "Nodes.h"
-#include "MemoryQueue.h"
 #include "Hazard.h"
 
 extern searchLayer_t** numaLayers;

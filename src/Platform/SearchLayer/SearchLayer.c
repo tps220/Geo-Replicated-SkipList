@@ -16,8 +16,6 @@
 #include <numa.h>
 #include <sched.h>
 
-inline void collect(memory_queue_t* garbage, LinkedList_t* retiredList, int zone);
-
 searchLayer_t* constructSearchLayer(inode_t* sentinel, int zone) {
   searchLayer_t* numask = (searchLayer_t*)malloc(sizeof(searchLayer_t));
   numask -> sentinel = sentinel;

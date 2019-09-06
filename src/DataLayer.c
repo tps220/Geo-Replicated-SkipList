@@ -10,14 +10,13 @@
 dataLayerThread_t* remover = NULL;
 
 //Helper Functions
-inline node_t* getElement(inode_t* sentinel, const int val, HazardNode_t* hazardNode);
+inline pair_t getElement(inode_t* sentinel, const int val, HazardNode_t* hazardNode);
 inline void dispatchSignal(int val, node_t* dataLayer, Job operation);
 inline int validateLink(node_t* previous, node_t* current);
 inline int validateRemoval(node_t* previous, node_t* current);
-inline void collect(memory_queue_t* garbage, LinkedList_t* retiredList);
 inline dataLayerThread_t* constructDataLayerThread();
 
-inline removeElement(node_t* previous, node_t* current, HazardNode_t* hazardNode) {
+inline void removeElement(node_t* previous, node_t* current, HazardNode_t* hazardNode) {
   current -> markedToDelete = 2;
   current -> fresh = 0;
   previous -> next = current -> next;
@@ -137,7 +136,7 @@ int lazyRemove(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
     if (validateLink(previous, current)) {
       if (current -> val != val || current -> markedToDelete) {
         if (validateRemoval(previous, current)) {
-          removeElement(previous, current);
+          removeElement(previous, current, hazardNode);
         }
         pthread_mutex_unlock(&previous -> lock);
         pthread_mutex_unlock(&current -> lock);
@@ -145,7 +144,7 @@ int lazyRemove(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
       }
       current -> markedToDelete = 1;
       if (validateRemoval(previous, current)) {
-        removeElement(previous, current);
+        removeElement(previous, current, hazardNode);
       }
       else {
         current -> fresh = 1;

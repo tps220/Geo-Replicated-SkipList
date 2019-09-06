@@ -3,7 +3,7 @@
 
 #include "Nodes.h"
 #include "JobQueue.h"
-#include "MemoryQueue.h"
+#include "LinkedList.h"
 #include <pthread.h>
 
 typedef struct searchLayer {
@@ -15,6 +15,7 @@ typedef struct searchLayer {
   volatile char stopGarbageCollection;
   volatile char running;
   int sleep_time;
+  LinkedList_t* retiredList;
 } searchLayer_t;
 
 //driver functions

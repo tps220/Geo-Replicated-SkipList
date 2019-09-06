@@ -15,7 +15,7 @@ typedef struct HazardNode {
 } HazardNode_t;
 
 HazardNode_t* constructHazardNode(int zone);
-void destructHazardNode(HazardNode_t* node, int zone);
+void destructHazardNode(HazardNode_t* node, int zone, int isDataLayer);
 
 typedef struct HazardContainer {
     HazardNode_t* head;
