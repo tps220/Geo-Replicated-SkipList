@@ -541,8 +541,10 @@ int main(int argc, char **argv) {
 
   // start data-layer-helper thread
   char test_complete = 0;
-  startDataLayerHelpers(head);
-
+  hazardNode -> next = constructHazardNode(0);
+  startDataLayerHelpers(head, hazardNode);
+  hazardNode = hazardNode -> next;
+  
   //start pernuma layer helper with 100ms sleep time
   for(int i = 0; i < numberNumaZones; ++i) {
     startIndexLayer(numaLayers[i], 100);

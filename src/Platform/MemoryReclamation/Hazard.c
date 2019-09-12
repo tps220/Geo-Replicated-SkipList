@@ -37,12 +37,15 @@ void scan(LinkedList_t* retiredList, void (*reclaimMemory)(void*, int), int zone
   //Collect all valid hazard pointers across application threads
   LinkedList_t* ptrList = constructLinkedList();
   HazardNode_t* runner = memoryLedger -> head;
+   __sync_synchronize();
   while (runner != NULL) {
-    if (runner -> hp0 != NULL) {
-      ll_push(ptrList, runner -> hp0);
+    volatile void* hp0 = (volatile void*)runner -> hp0;
+    volatile void* hp1 = (volatile void*)runner -> hp1;
+    if (hp0 != NULL) {
+      ll_push(ptrList, hp0);
     }
-    if (runner -> hp1 != NULL) {
-      ll_push(ptrList, runner -> hp1);
+    if (hp1 != NULL) {
+      ll_push(ptrList, hp1);
     }
     runner = runner -> next;
   }

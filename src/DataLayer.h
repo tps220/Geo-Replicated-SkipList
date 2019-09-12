@@ -29,7 +29,7 @@ int lazyRemove(searchLayer_t* numask, int val, HazardNode_t* hazardNode);
 //Background functions
 void* backgroundRemoval(void* input);
 void* garbageCollectDataLayer(void* input);
-void startDataLayerHelpers(node_t* sentinel);
-void stopDataLayerHelpers();
+void startDataLayerHelpers(node_t* sentinel, HazardNode_t* hazardNode);
+void stopDataLayerHelpers(HazardNode_t* hazardNode);
 
 #endif
