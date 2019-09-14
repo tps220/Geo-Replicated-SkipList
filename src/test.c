@@ -515,7 +515,7 @@ int main(int argc, char **argv) {
   printf("Initialized Search Layers\n");
 
   //Initialize Hazard Container
-  HazardNode_t* hazardNode = constructHazardNode(0);
+  HazardNode_t* hazardNode = constructHazardNode(0, nb_threads);
   memoryLedger = constructHazardContainer(hazardNode);
   printf("Created Hazard Manager\n");
 
@@ -541,7 +541,7 @@ int main(int argc, char **argv) {
 
   // start data-layer-helper thread
   char test_complete = 0;
-  hazardNode -> next = constructHazardNode(0);
+  hazardNode -> next = constructHazardNode(0, 0);
   startDataLayerHelpers(head, hazardNode);
   hazardNode = hazardNode -> next;
   
@@ -617,7 +617,7 @@ int main(int argc, char **argv) {
       sl_index = 0;
     }
     if (i != nb_threads - 1) {
-      hazardNode -> next = constructHazardNode(sl_index);
+      hazardNode -> next = constructHazardNode(sl_index, i + 1);
       hazardNode = hazardNode -> next;
     }
     if (pthread_create(&threads[i], &attr, test, (void *)(&data[i])) != 0) {

@@ -36,10 +36,12 @@ void destructIndexNode(inode_t* node, int zone) {
 //but does not link it to another node
 node_t* constructNode(int val, int initialReferences) {
   node_t* node = (node_t*)malloc(sizeof(node_t));
-  node -> val = val;
   node -> next = NULL;
+  node -> previous = NULL
+  node -> val = val;
   node -> markedToDelete = EMPTY;
   node -> references = 0;
+  node -> inQueue = 0;
   node -> fresh = 1; //automatically marked as fresh on construction
   pthread_mutex_init(&node -> lock, NULL);
   return node;

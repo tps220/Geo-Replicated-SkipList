@@ -12,10 +12,11 @@ typedef struct HazardNode {
     void* hp1;
     LinkedList_t* retiredList;
     struct HazardNode* next;
+    unsigned int id;
 } HazardNode_t;
 
-HazardNode_t* constructHazardNode(int zone);
-void destructHazardNode(HazardNode_t* node, int zone, int isDataLayer);
+HazardNode_t* constructHazardNode(unsigned int zone, unsigned int id);
+void destructHazardNode(HazardNode_t* node, unsigned int zone, int isDataLayer);
 
 typedef struct HazardContainer {
     HazardNode_t* head;
@@ -26,8 +27,8 @@ void destructHazardContainer(HazardContainer_t* container);
 
 extern HazardContainer_t* memoryLedger;
 
-void retireElement(LinkedList_t* retiredList, void* ptr, void (*reclaimMemory)(void*, int), int zone);
-void scan(LinkedList_t* retiredList, void (*reclaimMemory)(void*, int), int zone);
+void retireElement(LinkedList_t* retiredList, void* ptr, void (*reclaimMemory)(void*, int), unsigned int zone);
+void scan(LinkedList_t* retiredList, void (*reclaimMemory)(void*, int), unsigned int zone);
 void reclaimIndexNode(void* ptr, int zone);
 void reclaimDataLayerNode(void* ptr, int zone);
 

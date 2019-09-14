@@ -3,15 +3,16 @@
 #include "Hazard.h"
 #include "Nodes.h"
 
-HazardNode_t* constructHazardNode(int zone) {
+HazardNode_t* constructHazardNode(unsigned int zone, unsigned int id) {
     HazardNode_t* node = (HazardNode_t*)nalloc(allocators[zone], sizeof(HazardNode_t));
     node -> hp0 = node -> hp1 = NULL;
+    node -> id = id;
     node -> next = NULL;
     node -> retiredList = constructLinkedList();
     return node;
 }
 
-void destructHazardNode(HazardNode_t* node, int zone, int isDataLayer) {
+void destructHazardNode(HazardNode_t* node, unsigned int zone, int isDataLayer) {
   destructLinkedList(node -> retiredList, isDataLayer);
   nfree(allocators[zone], node, sizeof(HazardNode_t));
 }
@@ -33,7 +34,7 @@ void retireElement(LinkedList_t* retiredList, void* ptr, void (*reclaimMemory)(v
   }
 }
 
-void scan(LinkedList_t* retiredList, void (*reclaimMemory)(void*, int), int zone) {
+void scan(LinkedList_t* retiredList, void (*reclaimMemory)(void*, int), unsigned int zone) {
   //Collect all valid hazard pointers across application threads
   LinkedList_t* ptrList = constructLinkedList();
   HazardNode_t* runner = memoryLedger -> head;
@@ -65,13 +66,13 @@ void scan(LinkedList_t* retiredList, void (*reclaimMemory)(void*, int), int zone
   free(tmpList);
 }
 
-void reclaimIndexNode(void* ptr, int zone) {
+void reclaimIndexNode(void* ptr, unsigned int zone) {
   inode_t* node = (inode_t*)ptr;
   destructIndexNode(node, zone);
   node = NULL;
 }
 
-void reclaimDataLayerNode(void* ptr, int zone) {
+void reclaimDataLayerNode(void* ptr, unsigned int zone) {
   free(ptr);
   ptr = NULL;
 }
