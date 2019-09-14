@@ -20,7 +20,6 @@ inline void removeElement(node_t* previous, node_t* current, HazardNode_t* hazar
   current -> markedToDelete = 2;
   current -> fresh = 0;
   previous -> next = current -> next;
-  RETIRE_NODE(hazardNode, current);
 }
 
 inline pair_t getElement(inode_t* sentinel, const int val, HazardNode_t* hazardNode) {
@@ -45,12 +44,13 @@ inline pair_t getElement(inode_t* sentinel, const int val, HazardNode_t* hazardN
     if (valid = (validateRemoval(prv, curr) && curr -> next -> val < val)) {
       pthread_mutex_lock(&prv -> lock);
       pthread_mutex_lock(&curr -> lock);
-      if (validateRemoval(prv, curr) && curr -> next -> val < val) {
+      if (valid = validateRemoval(prv, curr) && curr -> next -> val < val) {
         removeElement(prv, curr, hazardNode);
       }
       pthread_mutex_unlock(&prv -> lock);
       pthread_mutex_unlock(&curr -> lock);
       if (valid) {
+        RETIRE_NODE(hazardNode, curr);
         hazardNode -> hp1 = prv -> next;
         curr = hazardNode -> hp1;
         continue;
@@ -58,7 +58,7 @@ inline pair_t getElement(inode_t* sentinel, const int val, HazardNode_t* hazardN
     }
     hazardNode -> hp0 = curr;
     prv = (node_t*)hazardNode -> hp0;
-    hazardNode -> hp1 = curr -> next;
+    hazardNode -> hp1 = prv -> next;
     curr = (node_t*)hazardNode -> hp1;
   }
 
@@ -77,12 +77,12 @@ inline void dispatchSignal(int val, node_t* dataLayer, Job operation) {
 
 inline int validateLink(node_t* previous, node_t* current) {
   return (volatile node_t*)previous -> next == current &&
-         previous -> markedToDelete != PHYSICAL &&
-         current -> markedToDelete != PHYSICAL;
+         (volatile int)previous -> markedToDelete != PHYSICAL &&
+         (volatile int)current -> markedToDelete != PHYSICAL;
 }
 
 inline int validateRemoval(node_t* previous, node_t* current) {
-  return current -> markedToDelete == LOGICAL &&
+  return (volatile int) current -> markedToDelete == LOGICAL &&
          validateLink(previous, current) &&
          current -> references == 0;
 }
@@ -136,15 +136,20 @@ int lazyRemove(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
     pthread_mutex_lock(&current -> lock);
     if (validateLink(previous, current)) {
       if (current -> val != val || current -> markedToDelete) {
-        if (validateRemoval(previous, current)) {
+        int valid;
+        if (valid = (validateRemoval(previous, current))) {
           removeElement(previous, current, hazardNode);
         }
         pthread_mutex_unlock(&previous -> lock);
         pthread_mutex_unlock(&current -> lock);
+        if (valid) {
+          RETIRE_NODE(hazardNode, current); 
+        }
         return 0;
       }
       current -> markedToDelete = LOGICAL;
-      if (validateRemoval(previous, current)) {
+      int valid;
+      if (valid = (validateRemoval(previous, current))) {
         removeElement(previous, current, hazardNode);
       }
       else {
@@ -152,6 +157,9 @@ int lazyRemove(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
       }
       pthread_mutex_unlock(&previous -> lock);
       pthread_mutex_unlock(&current -> lock);
+      if (valid) {
+        RETIRE_NODE(hazardNode, current);
+      }
       return 1;
     }
     pthread_mutex_unlock(&previous -> lock);
@@ -231,7 +239,7 @@ void startDataLayerHelpers(node_t* sentinel, HazardNode_t* hazardNode) {
   }
 }
 
-void stopDataLayerHelpers() {
+void stopDataLayerHelpers(HazardNode_t* hazardNode) {
   if (remover -> running) {
     remover -> finished = 1;
     pthread_join(remover -> runner, NULL);

@@ -764,8 +764,8 @@ int main(int argc, char **argv) {
   printf("Cleaning up...\n");
   // Stop background threads and destruct
   test_complete = 1;
-  stopDataLayerHelpers();
-  for(int i = 0; i < numberNumaZones; i++) {
+  stopDataLayerHelpers(memoryLedger -> head);
+  for (int i = 0; i < numberNumaZones; i++) {
     destructSearchLayer(numaLayers[i]);
   }
   free(numaLayers);
