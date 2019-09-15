@@ -10,6 +10,7 @@
 dataLayerThread_t* propogator = NULL;
 dataLayerThread_t* remover = NULL;
 notification_queue_t** notifications = NULL;
+extern unsigned int numThreads;
 
 //Helper Functions
 inline pair_t getElement(inode_t* sentinel, const int val, HazardNode_t* hazardNode);
@@ -124,16 +125,16 @@ int lazyRemove(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
     pthread_mutex_lock(&current -> lock);
     if (validateLink(previous, current)) {
       if (current -> val != val || current -> markedToDelete) {
-        if (validateRemoval(prv, curr)) {
-          notify(notifications[hazardNode -> id], curr);
+        if (validateRemoval(previous, current)) {
+          notify(notifications[hazardNode -> id], current);
         }
         pthread_mutex_unlock(&previous -> lock);
         pthread_mutex_unlock(&current -> lock);
         return 0;
       }
       current -> markedToDelete = LOGICAL;
-      if (validateRemoval(prv, curr)) {
-        notify(notifications[hazardNode -> id], curr);
+      if (validateRemoval(previous, current)) {
+        notify(notifications[hazardNode -> id], current);
       }
       else {
         current -> fresh = 1;
@@ -172,11 +173,21 @@ void* backgroundPropogation(void* input) {
       hazardNode -> hp1 = previous -> next;
       current = (node_t*)hazardNode -> hp1;
     }
+ 
+  int size = 0;
+  for (int i = 0; i < numThreads + 1; i++) {
+      notification_t* runner = notifications[i] -> head;
+      while (runner != NULL) {
+          size++;
+          runner = runner -> next;
+      }
+  }
+  fprintf(stderr, "SIZE OF %d left\n", size);
   }
   return NULL;
 }
 
-int processNotifications(notification_queue_t *threadNotifications) {
+int processNotifications(notification_queue_t *threadNotifications, HazardNode_t* hazardNode) {
   notification_t* notification = processNotification(threadNotifications);
   if (notification != NULL) {
     node_t* target = notification -> node;
@@ -197,7 +208,7 @@ int processNotifications(notification_queue_t *threadNotifications) {
       RETIRE_NODE(hazardNode, target);
     }
     else {
-      __sync_fetch_and_or(&node -> inQueue, 0);
+      __sync_fetch_and_or(&target -> inQueue, 0);
     }
     free(notification);
     return 1;
@@ -210,7 +221,7 @@ void* backgroundNotificationConsumer(void* input) {
   dataLayerThread_t* thread = (dataLayerThread_t*)input;
   while (thread -> finished == 0) {
     for (int i = 0; i < numThreads + 1; i++) {
-      processNotifications(notifications[i]);
+      processNotifications(notifications[i], thread -> hazardNode);
     }
   }
   return NULL;
@@ -224,7 +235,7 @@ inline void initializeNotifications() {
 }
 
 inline void destructNotifications() {
-  for (int i = 0; i < numberNumaZones + numThreads + 1; i++) {
+  for (int i = 0; i < numThreads + 1; i++) {
     destructNotificationQueue(notifications[i]);
   }
   free(notifications);
@@ -256,7 +267,7 @@ void startDataLayerHelpers(node_t* sentinel, HazardNode_t* hazardNode) {
   initializeNotifications();
   remover = constructDataLayerThread(hazardNode);
   remover -> finished = 0;
-  pthread_create(&remover -> runner, NULL, backgroundRemoval, (void*)backgroundNotificationConsumer);
+  pthread_create(&remover -> runner, NULL, backgroundNotificationConsumer, (void*)remover);
   propogator -> running = 1;
 }
 

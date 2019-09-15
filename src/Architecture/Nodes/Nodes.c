@@ -37,7 +37,7 @@ void destructIndexNode(inode_t* node, int zone) {
 node_t* constructNode(int val, int initialReferences) {
   node_t* node = (node_t*)malloc(sizeof(node_t));
   node -> next = NULL;
-  node -> previous = NULL
+  node -> previous = NULL;
   node -> val = val;
   node -> markedToDelete = EMPTY;
   node -> references = 0;

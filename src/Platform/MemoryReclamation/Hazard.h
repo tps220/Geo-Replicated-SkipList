@@ -29,8 +29,8 @@ extern HazardContainer_t* memoryLedger;
 
 void retireElement(LinkedList_t* retiredList, void* ptr, void (*reclaimMemory)(void*, int), unsigned int zone);
 void scan(LinkedList_t* retiredList, void (*reclaimMemory)(void*, int), unsigned int zone);
-void reclaimIndexNode(void* ptr, int zone);
-void reclaimDataLayerNode(void* ptr, int zone);
+void reclaimIndexNode(void* ptr, unsigned int zone);
+void reclaimDataLayerNode(void* ptr, unsigned int zone);
 
 #define RETIRE_INDEX_NODE(retiredList, ptr, zone) retireElement((retiredList), (ptr), reclaimIndexNode, (zone))
 #define RETIRE_NODE(hazardNode, ptr) retireElement((hazardNode -> retiredList), (ptr), reclaimDataLayerNode, 0)

@@ -11,6 +11,7 @@ numa_allocator_t** allocators;
 int numberNumaZones;
 unsigned int levelmax;
 HazardContainer_t* memoryLedger;
+unsigned int numThreads;
 
 int sl_contains(searchLayer_t* numask, int val, HazardNode_t* hazardNode);
 int sl_add(searchLayer_t* numask, int val, HazardNode_t* hazardNode);

@@ -105,6 +105,7 @@ extern numa_allocator_t** allocators;
 extern searchLayer_t** numaLayers;
 extern int numberNumaZones;
 extern unsigned int levelmax;
+extern unsigned int numThreads;
 typedef struct zone_init_args {
   int     numa_zone;
   node_t*   head;
@@ -441,6 +442,7 @@ int main(int argc, char **argv) {
   if (numberNumaZones > nb_threads) {
     numberNumaZones = nb_threads; //don't spawn unnecessary background threads
   }
+  numThreads = nb_threads;
 
   if(numa_available() == -1) {
     printf("Error: NUMA unavailable on this system.\n");
@@ -729,6 +731,7 @@ int main(int argc, char **argv) {
 
   printf("Set size      : %d (expected: %d)\n", sl_size(head), size);
   printf("Total size    : %d (expected: %d)\n", sl_overhead(head), size);
+  printf("Search layer size : %d\n", searchLayerSize(numaLayers[0]));
 //  printf("Size (w/ del) : %d\n", data_layer_size(sentinel_node, 0));
 
   printf("Duration      : %d (ms)\n", duration);

@@ -1,7 +1,7 @@
 #ifndef JOB_QUEUE_C
 #define JOB_QUEUE_C
 
-#include "JobQueue.h"
+#include "NotifyQueue.h"
 
 notification_t* constructNotification(node_t* node) {
   notification_t* notification = (notification_t*)malloc(sizeof(notification_t));
@@ -10,7 +10,7 @@ notification_t* constructNotification(node_t* node) {
   return notification;
 }
 
-notification_t* constructNotificationQueue() {
+notification_queue_t* constructNotificationQueue() {
   notification_queue_t* q = (notification_queue_t*)malloc(sizeof(notification_queue_t));
   q -> sentinel = constructNotification(NULL);
   q -> tail = q -> head = q -> sentinel;

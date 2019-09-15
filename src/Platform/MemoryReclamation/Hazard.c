@@ -27,7 +27,7 @@ void destructHazardContainer(HazardContainer_t* container) {
   free(container);
 }
 
-void retireElement(LinkedList_t* retiredList, void* ptr, void (*reclaimMemory)(void*, int), int zone) {
+void retireElement(LinkedList_t* retiredList, void* ptr, void (*reclaimMemory)(void*, int), unsigned int zone) {
   ll_push(retiredList, ptr);
   if (retiredList -> size >= MAX_DEPTH) {
     scan(retiredList, reclaimMemory, zone);
