@@ -769,13 +769,13 @@ int main(int argc, char **argv) {
     destructSearchLayer(numaLayers[i]);
   }
   free(numaLayers);
-	free(allocators);
   sl_destruct(head);
   destructHazardContainer(memoryLedger);
 
   for (int i = 0; i < numberNumaZones; i++) {
     destructAllocator(allocators[i]);
   }
+  free(allocators);
   // Cleanup STM
   //TM_SHUTDOWN();
 

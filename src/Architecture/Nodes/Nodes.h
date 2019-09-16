@@ -36,6 +36,7 @@ typedef struct inode {
   int topLevel; //stores the height of the tower
   struct inode** next; //stores the next pointer for each level in the tower
   struct node* dataLayer; //stores a pointer to the tower's pernuma link into the data layer
+  char padding[8];
 } inode_t;
 
 inode_t* constructIndexNode(int val, int topLevel, node_t* dataLayer, int zone);

@@ -5,7 +5,6 @@
 #include <pthread.h>
 #include <assert.h>
 #include <unistd.h>
-#include <stdio.h>
 //Helper Threads
 dataLayerThread_t* remover = NULL;
 
@@ -27,7 +26,6 @@ inline int removeElement(node_t* previous, node_t* current, HazardNode_t* hazard
   }
   else {
     previous -> next = (volatile node_t*)current -> next;
-    //fprintf(stdout, "DELETED %d\n NEW CHAIN %d - %d - %d \n", current -> val, previous -> val, current -> val, previous -> next -> val);
     return 1;
   }
 }
@@ -107,13 +105,10 @@ int lazyAdd(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
   char retry = 1;
   while (retry) {
     pair_t pair = getElement(numask -> sentinel, val, hazardNode);
-    //volatile node_t* previous = (volatile node_t*)pair.previous;
-    //volatile node_t* current = (volatile node_t*)pair.current;
     node_t* previous = pair.previous;
     node_t* current = pair.current;
     pthread_mutex_lock(&previous -> lock);
     pthread_mutex_lock(&current -> lock);
-    //__sync_synchronize();
     if (validateLink(previous, current)) {
       if (current -> val == val && current -> markedToDelete) {
         current -> markedToDelete = EMPTY;
@@ -130,14 +125,12 @@ int lazyAdd(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
       node_t* insertion = constructNode(val, numberNumaZones); //automatically set as fresh
       insertion -> next = current;
       previous -> next = insertion;
-      //fprintf(stdout, "INSERTED %d INTO CHAIN %d %d %d \n", insertion -> val, previous -> val, insertion -> val, previous -> next -> next -> val);
       pthread_mutex_unlock(&previous -> lock);
       pthread_mutex_unlock(&current -> lock);
       return 1;
     }
     pthread_mutex_unlock(&previous -> lock);
     pthread_mutex_unlock(&current -> lock);
-    //fprintf(stdout, "{ [ val: %d marked: %d references %d ], [val: %d marked %d references %d ] }\n", previous -> val, previous -> markedToDelete, previous -> references, current -> val, current -> markedToDelete, current -> references);
   }
 }
 
@@ -145,13 +138,10 @@ int lazyRemove(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
   char retry = 1;
   while (retry) {
     pair_t pair = getElement(numask -> sentinel, val, hazardNode);
-    //volatile node_t* previous = (volatile node_t*)pair.previous;
-    //volatile node_t* current = (volatile node_t*)pair.current;
     node_t* previous = pair.previous;
     node_t* current = pair.current;
     pthread_mutex_lock(&previous -> lock);
     pthread_mutex_lock(&current -> lock);
-    //__sync_synchronize();
     if (validateLink(previous, current)) {
       if (current -> val != val || current -> markedToDelete) {
         int valid;
@@ -166,7 +156,6 @@ int lazyRemove(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
         return 0;
       }
       current -> markedToDelete = LOGICAL;
-      //fprintf(stdout, "Marked %d \n", current -> val);
       int valid;
       if (valid = (validateRemoval(previous, current))) {
         valid = removeElement(previous, current, hazardNode);
@@ -183,7 +172,6 @@ int lazyRemove(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
     }
     pthread_mutex_unlock(&previous -> lock);
     pthread_mutex_unlock(&current -> lock);
-    //fprintf(stdout, "{ [ val: %d marked: %d references %d ], [val: %d marked %d references %d ] }\n", previous -> val, previous -> markedToDelete, previous -> references, current -> val, current -> markedToDelete, current -> references);
   }
 }
 
@@ -205,16 +193,14 @@ void* backgroundRemoval(void* input) {
         else if (current -> markedToDelete == EMPTY) {
           //__sync_synchronize();
           __sync_fetch_and_add(&current -> references, numberNumaZones);
-          //current -> references += numberNumaZones;
           if (__sync_fetch_and_add(&current -> markedToDelete, 0) != EMPTY) {
             current -> references -= numberNumaZones;
           }
           else {
             dispatchSignal(current -> val, current, INSERTION);
           }
-          //fprintf(stdout, "Sent out %d\n", current -> val);
         }
-      }/*  
+      }/*
       else if (validateRemoval(previous, current)) {
         pthread_mutex_lock(&previous -> lock);
         pthread_mutex_lock(&current -> lock);

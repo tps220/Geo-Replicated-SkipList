@@ -31,7 +31,6 @@ void destructAllocator(numa_allocator_t* allocator) {
 
 //driver methods
 void* nalloc(numa_allocator_t* allocator, unsigned ssize) {
-  pthread_mutex_lock(&allocator -> lock);
   const unsigned cache_size = allocator -> cache_size;
   char last_alloc_half = allocator -> last_alloc_half;
 
@@ -59,12 +58,10 @@ void* nalloc(numa_allocator_t* allocator, unsigned ssize) {
   //service allocation request
   allocator -> buf_old = allocator -> buf_cur;
   allocator -> buf_cur = (char*)allocator -> buf_cur + aligned_size;
-  pthread_mutex_unlock(&allocator -> lock);
   return allocator -> buf_old;
 }
 
 void nfree(numa_allocator_t* allocator, void *ptr, unsigned ssize) {
-  pthread_mutex_lock(&allocator -> lock);
   const unsigned cache_size = allocator -> cache_size;
 
   //get alignment size
@@ -79,11 +76,9 @@ void nfree(numa_allocator_t* allocator, void *ptr, unsigned ssize) {
       allocator -> last_alloc_half = 0;
     }
   }
-  pthread_mutex_unlock(&allocator -> lock);
 }
 
 static void nreset(numa_allocator_t* allocator) {
-  pthread_mutex_lock(&allocator -> lock);
   if (!allocator -> empty) {
     //free other_buffers, if used
     if (allocator -> other_buffers != NULL) {
@@ -98,7 +93,6 @@ static void nreset(numa_allocator_t* allocator) {
     numa_free(allocator -> buf_start, allocator -> buf_size);
     allocator -> empty = 1;
   }
-  pthread_mutex_unlock(&allocator -> lock);
 }
 
 static void nrealloc(numa_allocator_t* allocator) {
