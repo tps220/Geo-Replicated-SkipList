@@ -3,17 +3,17 @@
 
 #include "SearchLayer.h"
 #include "Nodes.h"
-#include "Hazard.h"
 
 extern searchLayer_t** numaLayers;
 extern int numberNumaZones;
+extern gc_t* gc;
+
 typedef struct dataLayerThread_t {
   pthread_t runner;
   volatile char running;
   volatile char finished;
   int sleep_time;
   node_t* sentinel;
-  HazardNode_t* hazardNode;
 } dataLayerThread_t;
 
 typedef struct pair {
@@ -22,14 +22,14 @@ typedef struct pair {
 } pair_t;
 
 //Driver Functions
-int lazyFind(searchLayer_t* numask, int val, HazardNode_t* hazardNode);
-int lazyAdd(searchLayer_t* numask, int val, HazardNode_t* hazardNode);
-int lazyRemove(searchLayer_t* numask, int val, HazardNode_t* hazardNode);
+int lazyFind(searchLayer_t* numask, int val);
+int lazyAdd(searchLayer_t* numask, int val);
+int lazyRemove(searchLayer_t* numask, int val);
 
 //Background functions
 void* backgroundRemoval(void* input);
 void* garbageCollectDataLayer(void* input);
-void startDataLayerHelpers(node_t* sentinel, HazardNode_t* hazardNode);
-void stopDataLayerHelpers(HazardNode_t* hazardNode);
+void startDataLayerHelpers(node_t* sentinel);
+void stopDataLayerHelpers();
 
 #endif

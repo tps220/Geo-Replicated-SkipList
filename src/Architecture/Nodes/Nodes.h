@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include "Allocator.h"
+#include "gc.h"
 
 #define INT_MIN -2147483648
 #define INT_MAX 2147483647
@@ -25,6 +26,8 @@ typedef struct node {
   volatile int fresh; //identifies whether the node was recently removed/inserted, and needs to be propogated to index layers
   volatile struct node* next; //stores the next data layer node
   pthread_mutex_t lock; //node-specific mutex
+  char padding[54];
+  gc_entry_t  gc_entry;
 } node_t;
 
 node_t* constructNode(int val, int intitialReferences);

@@ -6,7 +6,6 @@
 #include "SkipListLazyLock.h"
 #include "JobQueue.h"
 #include "LinkedList.h"
-#include "Hazard.h"
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
@@ -23,7 +22,6 @@ searchLayer_t* constructSearchLayer(inode_t* sentinel, int zone) {
   numask -> updates = constructJobQueue();
   numask -> running = 0;
   numask -> sleep_time = 0;
-  numask -> retiredList = constructLinkedList();
   return numask;
 }
 
@@ -69,7 +67,6 @@ void stopIndexLayer(searchLayer_t* numask) {
 void* updateNumaZone(void* args) {
   searchLayer_t* numask = (searchLayer_t*)args;
   job_queue_t* updates = numask -> updates;
-  LinkedList_t* retiredList = numask -> retiredList;
   inode_t* sentinel = numask -> sentinel;
   const int numaZone = numask -> numaZone;
 
@@ -81,13 +78,13 @@ void* updateNumaZone(void* args) {
 
   while (numask -> finished == 0) {
     usleep(numask -> sleep_time);
-    while (numask -> finished == 0 && runJob(sentinel, pop(updates), numaZone, retiredList)) {}
+    while (numask -> finished == 0 && runJob(sentinel, pop(updates), numaZone)) {}
   }
 
   return NULL;
 }
 
-int runJob(inode_t* sentinel, q_node_t* job, int zone, LinkedList_t* retiredList) {
+int runJob(inode_t* sentinel, q_node_t* job, int zone) {
   if (job == NULL) {
     return 0;
   }
@@ -95,7 +92,7 @@ int runJob(inode_t* sentinel, q_node_t* job, int zone, LinkedList_t* retiredList
     add(sentinel, job -> val, job -> node, zone);
   }
   else if (job -> operation == REMOVAL) {
-    removeNode(sentinel, job -> val, zone, retiredList);
+    removeNode(sentinel, job -> val);
   }
   free(job);
   return 1;

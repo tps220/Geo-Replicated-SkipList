@@ -36,7 +36,7 @@ void retireElement(LinkedList_t* retiredList, void* ptr, void (*reclaimMemory)(v
 void scan(LinkedList_t* retiredList, void (*reclaimMemory)(void*, int), int zone) {
   //Collect all valid hazard pointers across application threads
   LinkedList_t* ptrList = constructLinkedList();
-  HazardNode_t* runner = memoryLedger -> head;
+  HazardNode_t* runner = NULL; //memoryLedger -> head;
    __sync_synchronize();
   while (runner != NULL) {
     volatile void* hp0 = (volatile void*)runner -> hp0;

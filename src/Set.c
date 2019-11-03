@@ -3,16 +3,16 @@
 
 #include "Set.h"
 
-int sl_contains(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
-  return lazyFind(numask, val, hazardNode);
+int sl_contains(searchLayer_t* numask, int val) {
+  return lazyFind(numask, val);
 }
 
-int sl_add(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
-  return lazyAdd(numask, val, hazardNode);
+int sl_add(searchLayer_t* numask, int val) {
+  return lazyAdd(numask, val);
 }
 
-int sl_remove(searchLayer_t* numask, int val, HazardNode_t* hazardNode) {
-  return lazyRemove(numask, val, hazardNode);
+int sl_remove(searchLayer_t* numask, int val) {
+  return lazyRemove(numask, val);
 }
 
 int sl_size(node_t* sentinel) {

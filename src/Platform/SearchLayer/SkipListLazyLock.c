@@ -37,7 +37,7 @@ int add(inode_t *sentinel, int val, node_t* dataLayer, int zone) {
 }
 
 //removes a value in the skip list when present
-int removeNode(inode_t *sentinel, int val, int zone, LinkedList_t* retiredList) {
+int removeNode(inode_t *sentinel, int val) {
   //store the result of a traversal through the skip list while searching for a value
   inode_t *predecessors[sentinel -> topLevel], *successors[sentinel -> topLevel];
   inode_t *previous = sentinel, *current = NULL;
@@ -62,7 +62,7 @@ int removeNode(inode_t *sentinel, int val, int zone, LinkedList_t* retiredList) 
       predecessors[i] -> next[i] = successors[i] -> next[i];
     }
     __sync_fetch_and_sub(&candidate -> dataLayer -> references, 1);
-    RETIRE_INDEX_NODE(retiredList, candidate, zone);
+    //RETIRE_INDEX_NODE(retiredList, candidate, zone);
     return 1;
   }
   return 0;

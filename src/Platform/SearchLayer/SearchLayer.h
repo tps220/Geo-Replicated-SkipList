@@ -14,7 +14,6 @@ typedef struct searchLayer {
   volatile char finished;
   volatile char running;
   int sleep_time;
-  LinkedList_t* retiredList;
 } searchLayer_t;
 
 //driver functions
@@ -25,8 +24,7 @@ void startIndexLayer(searchLayer_t* numask, int sleep_time);
 void stopIndexLayer(searchLayer_t* numask);
 
 //helper functions
-int runJob(inode_t* sentinel, q_node_t* job, int zone, LinkedList_t* retiredList);
+int runJob(inode_t* sentinel, q_node_t* job, int zone);
 void* updateNumaZone(void* args);
-void* garbageCollectionIndexLayer(void* args);
 
 #endif

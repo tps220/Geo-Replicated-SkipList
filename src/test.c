@@ -97,7 +97,7 @@ void barrier_cross(barrier_t *b) {
 }
 
 //Memory Management
-extern HazardContainer_t* memoryLedger;
+extern gc_t* gc;
 extern dataLayerThread_t* remover;
 extern numa_allocator_t** allocators;
 
@@ -189,7 +189,6 @@ typedef struct thread_data {
   searchLayer_t* sl;
   barrier_t *barrier;
   unsigned long failures_because_contention;
-  HazardNode_t* hazardNode;
 } thread_data_t;
 
 void* test(void *data) {
@@ -197,7 +196,7 @@ void* test(void *data) {
   unsigned int val = 0;
 
   thread_data_t *d = (thread_data_t *)data;
-  HazardNode_t* hazardNode = d -> hazardNode;
+  gc_register(gc);
 
   //run test thread on correct NUMA zone
   searchLayer_t* sl = d -> sl;
@@ -223,7 +222,7 @@ void* test(void *data) {
       if (last < 0) { // add
 
         val = rand_range_re(&d->seed, d->range);
-        if (sl_add(sl, val, hazardNode)) {
+        if (sl_add(sl, val)) {
           d->nb_added++;
           last = val;
         }
@@ -231,7 +230,7 @@ void* test(void *data) {
 
       } else { // remove
         if (d->alternate) { // alternate mode (default)
-          if (sl_remove(sl, last, hazardNode)) {
+          if (sl_remove(sl, last)) {
             d->nb_removed++;
           }
           last = -1;
@@ -239,7 +238,7 @@ void* test(void *data) {
           /* Random computation only in non-alternated cases */
           val = rand_range_re(&d->seed, d->range);
           /* Remove one random value */
-          if (sl_remove(sl, val, hazardNode)) {
+          if (sl_remove(sl, val)) {
             d->nb_removed++;
             /* Repeat until successful, to avoid size variations */
             last = -1;
@@ -270,7 +269,7 @@ void* test(void *data) {
         val = rand_range_re(&d->seed, d->range);
       }
 
-      if (sl_contains(sl, val, hazardNode))
+      if (sl_contains(sl, val))
         d->nb_found++;
       d->nb_contains++;
 
@@ -292,6 +291,7 @@ void* test(void *data) {
 
   /* Free transaction */
   //TM_THREAD_EXIT();
+  gc_unregister(gc);
   return NULL;
 }
 
@@ -457,11 +457,13 @@ int main(int argc, char **argv) {
   printf("Elasticity   : %d\n", unit_tx);
   printf("Alternate    : %d\n", alternate);
   printf("Efffective   : %d\n", effective);
-  printf("Type sizes   : int=%d/long=%d/ptr=%d/word=%d\n",
+  printf("Type sizes   : int=%d/long=%d/ptr=%d/word=%d\nnode=%d/inode=%d\n",
          (int)sizeof(int),
          (int)sizeof(long),
          (int)sizeof(void *),
-         (int)sizeof(uintptr_t));
+         (int)sizeof(uintptr_t),
+         (int)sizeof(node_t),
+         (int)sizeof(inode_t));
   printf("NUMA Zones   : %d\n", numberNumaZones);
 
   timeout.tv_sec = duration / 1000;
@@ -484,6 +486,11 @@ int main(int argc, char **argv) {
   }
 
   levelmax = floor_log_2((unsigned int) initial);
+
+  //Initialize Memory Reclamation Object
+  gc = gc_create(offsetof(node_t, gc_entry), NULL, NULL);
+  assert(gc != NULL);
+  gc_register(gc);
 
   //Create allocators
   allocators = (numa_allocator_t**)malloc(numberNumaZones * sizeof(numa_allocator_t*));
@@ -514,11 +521,6 @@ int main(int argc, char **argv) {
   free(thds);
   printf("Initialized Search Layers\n");
 
-  //Initialize Hazard Container
-  HazardNode_t* hazardNode = constructHazardNode(0);
-  memoryLedger = constructHazardContainer(hazardNode);
-  printf("Created Hazard Manager\n");
-
   stop_condition = 0;
   global_seed = rand();
 #ifdef TLS
@@ -541,9 +543,7 @@ int main(int argc, char **argv) {
 
   // start data-layer-helper thread
   char test_complete = 0;
-  hazardNode -> next = constructHazardNode(0);
-  startDataLayerHelpers(head, hazardNode);
-  hazardNode = hazardNode -> next;
+  startDataLayerHelpers(head);
   
   //start pernuma layer helper with 100ms sleep time
   for(int i = 0; i < numberNumaZones; ++i) {
@@ -559,7 +559,7 @@ int main(int argc, char **argv) {
     } else {
             val = rand_range_re(&global_seed, range);
     }
-    if (sl_add(numaLayers[cur_zone], val, hazardNode)) {
+    if (sl_add(numaLayers[cur_zone], val)) {
       last = val;
       i++;
       if(i % (initial / 4) == 0 && cur_zone != numberNumaZones - 1) {
@@ -610,15 +610,10 @@ int main(int argc, char **argv) {
     data[i].sl = numaLayers[sl_index];
     data[i].barrier = &barrier;
     data[i].failures_because_contention = 0;
-    data[i].hazardNode = hazardNode;
 
     sl_index++;
     if (sl_index == numberNumaZones){
       sl_index = 0;
-    }
-    if (i != nb_threads - 1) {
-      hazardNode -> next = constructHazardNode(sl_index);
-      hazardNode = hazardNode -> next;
     }
     if (pthread_create(&threads[i], &attr, test, (void *)(&data[i])) != 0) {
       fprintf(stderr, "Error creating thread\n");
@@ -725,7 +720,7 @@ int main(int argc, char **argv) {
       max_retries = data[i].max_retries;
   }
   free(threads);
-	free(data);
+  free(data);
 
   printf("Set size      : %d (expected: %d)\n", sl_size(head), size);
   printf("Total size    : %d (expected: %d)\n", sl_overhead(head), size);
@@ -764,18 +759,20 @@ int main(int argc, char **argv) {
   printf("Cleaning up...\n");
   // Stop background threads and destruct
   test_complete = 1;
-  stopDataLayerHelpers(memoryLedger -> head);
+  stopDataLayerHelpers();
   for (int i = 0; i < numberNumaZones; i++) {
     destructSearchLayer(numaLayers[i]);
   }
   free(numaLayers);
   sl_destruct(head);
-  destructHazardContainer(memoryLedger);
 
   for (int i = 0; i < numberNumaZones; i++) {
     destructAllocator(allocators[i]);
   }
   free(allocators);
+  gc_full(gc, 10);
+  gc_unregister(gc);
+  gc_destroy(gc);
   // Cleanup STM
   //TM_SHUTDOWN();
 

@@ -12,6 +12,12 @@ all:	main
 Allocator.o: ./Architecture/Allocator/Allocator.h
 	$(CC) $(CFLAGS) $(EXTRA_PATHS) -c -o $(BUILDIR)/Allocator.o ./Architecture/Allocator/Allocator.c
 
+ebr.o: ./Platform/MemoryReclamation/ebr.h
+	$(CC) $(CFLAGS) $(EXTRA_PATHS) -c -o $(BUILDIR)/ebr.o ./Platform/MemoryReclamation/ebr.c
+
+gc.o: ./Platform/MemoryReclamation/ebr.h ./Platform/MemoryReclamation/gc.h
+	$(CC) $(CFLAGS) $(EXTRA_PATHS) -c -o $(BUILDIR)/gc.o ./Platform/MemoryReclamation/gc.c
+
 Nodes.o: ./Architecture/Nodes/Nodes.h ./Architecture/Allocator/Allocator.h
 	$(CC) $(CFLAGS) $(EXTRA_PATHS) $(EXTRA_FLAGS) -c -o $(BUILDIR)/Nodes.o ./Architecture/Nodes/Nodes.c
 
@@ -39,8 +45,8 @@ Set.o: Set.h DataLayer.h ./Architecture/Allocator/Allocator.h
 test.o: test.c Set.h
 	$(CC) $(CFLAGS) $(EXTRA_PATHS) $(EXTRA_FLAGS) -c -o $(BUILDIR)/test.o test.c
 
-main: Allocator.o Nodes.o JobQueue.o SkipListLazyLock.o SearchLayer.o DataLayer.o Set.o test.o Hazard.o LinkedList.o
-	$(CC) $(CFLAGS) $(EXTRA_PATHS) $(EXTRA_FLAGS) $(BUILDIR)/Allocator.o $(BUILDIR)/Nodes.o $(BUILDIR)/JobQueue.o $(BUILDIR)/LinkedList.o $(BUILDIR)/Hazard.o $(BUILDIR)/SkipListLazyLock.o $(BUILDIR)/SearchLayer.o $(BUILDIR)/DataLayer.o $(BUILDIR)/Set.o $(BUILDIR)/test.o -o $(BINS) $(LDFLAGS) -lnuma
+main: Allocator.o ebr.o gc.o Nodes.o JobQueue.o SkipListLazyLock.o SearchLayer.o DataLayer.o Set.o test.o Hazard.o LinkedList.o
+	$(CC) $(CFLAGS) $(EXTRA_PATHS) $(EXTRA_FLAGS) $(BUILDIR)/Allocator.o $(BUILDIR)/ebr.o $(BUILDIR)/gc.o $(BUILDIR)/Nodes.o $(BUILDIR)/JobQueue.o $(BUILDIR)/LinkedList.o $(BUILDIR)/Hazard.o $(BUILDIR)/SkipListLazyLock.o $(BUILDIR)/SearchLayer.o $(BUILDIR)/DataLayer.o $(BUILDIR)/Set.o $(BUILDIR)/test.o -o $(BINS) $(LDFLAGS) -lnuma
 
 clean:
 	-rm -f $(BINS)
