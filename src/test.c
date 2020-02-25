@@ -644,7 +644,7 @@ int main(int argc, char **argv) {
     if (sl_index == numberNumaZones){
       sl_index = 0;
     }
-    if (pthread_create(&threads[i], &attr, test, (void *)(&data[i])) != 0) {
+    if (pthread_create(&threads[i], &attr, testRangeQuery, (void *)(&data[i])) != 0) {
       fprintf(stderr, "Error creating thread\n");
       exit(1);
     }
