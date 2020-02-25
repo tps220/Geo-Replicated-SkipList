@@ -25,6 +25,7 @@ typedef struct pair {
 int lazyFind(searchLayer_t* numask, int val);
 int lazyAdd(searchLayer_t* numask, int val);
 int lazyRemove(searchLayer_t* numask, int val);
+int sl_rangeQuery(searchLayer_t* numask, const int lo, const int hi, int* result) {
 
 //Background functions
 void* backgroundRemoval(void* input);

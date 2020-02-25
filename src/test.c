@@ -44,6 +44,7 @@
 #define DEFAULT_UNBALANCED              0
 #define MAX_NUMA_ZONES                  numa_max_node() + 1
 #define MIN_NUMA_ZONES                  1
+#define RANGE_QUERY_LENGTH              50
 
 #define XSTR(s)                         STR(s)
 #define STR(s)                          #s
@@ -291,6 +292,34 @@ void* test(void *data) {
 
   /* Free transaction */
   //TM_THREAD_EXIT();
+  gc_unregister(gc);
+  return NULL;
+}
+
+void* testRangeQuery(void *data) {
+  int unext, last = -1;
+  unsigned int val = 0;
+
+  thread_data_t *d = (thread_data_t *)data;
+  gc_register(gc);
+
+  //run test thread on correct NUMA zone
+  searchLayer_t* sl = d -> sl;
+  int cur_zone = sl -> numaZone;
+  numa_run_on_node(cur_zone);
+  int* resultList = (int*)malloc(RANGE_QUERY_LENGTH * sizeof(int));
+
+  /* Wait on barrier */
+  barrier_cross(d->barrier);
+
+  while (stop_condition == 0) {
+    val = rand_range_re(&d -> seed, d -> range - RANGE_QUERY_LENGTH);
+    if (sl_rangeQuery(sl, val, val + RANGE_QUERY_LENGTH, resultList)) {
+      d -> nb_found++;
+    }
+    d -> nb_contains++;
+  }
+  
   gc_unregister(gc);
   return NULL;
 }

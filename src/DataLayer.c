@@ -181,6 +181,21 @@ int lazyRemove(searchLayer_t* numask, int val) {
   }
 }
 
+int sl_rangeQuery(searchLayer_t* numask, const int lo, const int hi, int* result) {
+  pair_t pair = getElement(numask -> sentinel, val);
+  node_t* runner = pair.previous;
+  while (runner -> val < lo) {
+    runner = runner -> next;
+  }
+
+  int count = 0;
+  while (runner -> val >= lo && runner -> val <= hi) {
+    result[count] = runner -> val;
+    runner = runner -> next;
+  }
+  return count;
+}
+
 void* backgroundRemoval(void* input) {
   dataLayerThread_t* thread = (dataLayerThread_t*)input;
   node_t* sentinel = thread -> sentinel;

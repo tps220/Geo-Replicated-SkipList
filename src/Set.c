@@ -15,6 +15,11 @@ int sl_remove(searchLayer_t* numask, int val) {
   return lazyRemove(numask, val);
 }
 
+int sl_rangeQuery(searchLayer_t* numask, const int lo, const int hi, int* result) {
+  return rangeQuery(numask, lo, hi, result);
+}
+
+
 int sl_size(node_t* sentinel) {
   int size = -1;
   node_t* runner = sentinel -> next;
