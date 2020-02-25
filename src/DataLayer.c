@@ -181,8 +181,8 @@ int lazyRemove(searchLayer_t* numask, int val) {
   }
 }
 
-int sl_rangeQuery(searchLayer_t* numask, const int lo, const int hi, int* result) {
-  pair_t pair = getElement(numask -> sentinel, val);
+int rangeQuery(searchLayer_t* numask, const int lo, const int hi, int* result) {
+  pair_t pair = getElement(numask -> sentinel, lo);
   node_t* runner = pair.previous;
   while (runner -> val < lo) {
     runner = runner -> next;
